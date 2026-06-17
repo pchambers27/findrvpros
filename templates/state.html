@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{{ service.name }} in {{ state_name }} — Browse by City{% endblock %}
+{% block content %}
+  <nav class="crumbs">
+    <a href="/">Home</a> › <a href="/{{ service.slug }}">{{ service.name }}</a> › <span>{{ state_name }}</span>
+  </nav>
+  <h1>{{ service.name }} in {{ state_name }}</h1>
+  <p class="lede">Select a city to see certified {{ service.name|lower }} pros serving that area.</p>
+  <ul class="tile-list">
+    {% for c in cities %}
+      <li><a href="/{{ service.slug }}/{{ state_slug }}/{{ c.city_slug }}">{{ c.city }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

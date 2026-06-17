@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{ service.name }} — Find Certified Pros by State{% endblock %}
+{% block content %}
+  <nav class="crumbs"><a href="/">Home</a> › <span>{{ service.name }}</span></nav>
+  <h1>Find Certified {{ service.name }} Pros</h1>
+  <p class="lede">Mobile {{ service.name|lower }} professionals who come to you. Pick your state.</p>
+  {% if states %}
+    <ul class="tile-list">
+      {% for s in states %}
+        <li><a href="/{{ service.slug }}/{{ s.state_slug }}">{{ s.state }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">Coverage areas coming soon.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}
+{%- if providers -%}
+  {{ providers|length }} Certified {{ service.name }} Pros in {{ area.city }}, {{ area.state }}
+{%- else -%}
+  {{ service.name }} in {{ area.city }}, {{ area.state }}
+{%- endif -%}
+{% endblock %}
+{% block content %}
+  <nav class="crumbs">
+    <a href="/">Home</a> › <a href="/{{ service.slug }}">{{ service.name }}</a> ›
+    <a href="/{{ service.slug }}/{{ area.state_slug }}">{{ area.state }}</a> › <span>{{ area.city }}</span>
+  </nav>
+
+  {% if providers %}
+    <h1>{{ providers|length }} Certified {{ service.name }} Pros in {{ area.city }}, {{ area.state }}</h1>
+    <div class="card-list">
+      {% for p in providers %}
+        <article class="card">
+          <h2><a href="/providers/{{ p.slug }}">{{ p.business_name }}</a></h2>
+          {% if p.bio %}<p>{{ p.bio }}</p>{% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <h1>{{ service.name }} in {{ area.city }}, {{ area.state }}</h1>
+    <p class="empty">We're adding certified inspectors in {{ area.city }} now. Check back soon.</p>
+  {% endif %}
+{% endblock %}
