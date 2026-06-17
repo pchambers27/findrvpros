@@ -133,15 +133,16 @@ def sitemap():
     pages.append(url_for('home', _external=True))
     for s in query_db("SELECT slug FROM services"):
         pages.append(url_for('service_pillar', service_slug=s['slug'], _external=True))
+    
     services = query_db("SELECT slug FROM services")
     states = query_db("SELECT DISTINCT state_slug FROM service_areas")
     for s in services:
         for st in states:
-            pages.append(url_for('service_state', service_slug=s['slug'], _external=True))
+            pages.append(url_for('service_state', service_slug=s['slug'], state_slug=st['state_slug'], _external=True))
         for area in query_db("SELECT state_slug, city_slug FROM service_areas"):
             pages.append(url_for('service_city', service_slug=s['slug'], state_slug=area['state_slug'], city_slug=area['city_slug'], _external=True))
-        for p in query_db("SELECT slug FROM providers WHERE status = 'live'"):
-            pages.append(url_for('provider_profile', slug=p['slug'], _external=True))
+    for p in query_db("SELECT slug FROM providers WHERE status = 'live'"):
+        pages.append(url_for('provider_profile', slug=p['slug'], _external=True))
             
     xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for url in pages:

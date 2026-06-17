@@ -1,6 +1,31 @@
 {% extends 'base.html' %}
 {% block title %}{{ provider.business_name }} | {{ provider.home_city }}, {{ provider.home_state }} RV Inspection{% endblock %}
-{% block meta %}<meta name="description" content="{{ meta_desc }}">{% endblock %}
+
+{% block meta %}<meta name="description" content="{{ meta_desc }}">
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "{{ provider.business_name }}",
+    "description": "{{ meta_desc }}",
+    "areaServed": "{{ provider.home_city }}, {{ provider.home_state }},
+      {% if review_count > 0 %}
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "{{ "%.1f"|format(avg_rating) }}",
+          "reviewCount": "{{ review_count }}"
+        },
+      {% endif %}
+    "makesOffer": [
+        {% for s in services %}
+        { "@type": "Offer",
+          "itemOffered": { "@type": "Service", "name": "{{ s.name }}" } }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+  }
+</script>
+{% endblock %}
+
 {% block content %}
   <nav class="crumbs">
     <a href="/">Home</a> › <a href="/rv-inspection">RV Inspection</a> ›
