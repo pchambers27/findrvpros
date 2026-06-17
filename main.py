@@ -1,4 +1,7 @@
 from flask import Flask, render_template, abort
+import sys
+import pysqlite3
+sys.modules["sqlite3"] = pysqlite3
 import sqlite3
 import re
 
