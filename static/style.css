@@ -54,3 +54,19 @@ h1 { font-size: 26px; margin-bottom: 10px; }
 .card h2 a { color: #0f766e; text-decoration: none; }
 
 .empty { color: #6b7280; background: #fff; border: 1px dashed #d1d5db; border-radius: 12px; padding: 20px; }
+
+.provider-hero { background:#fff; border:1px solid #e3e8e6; border-radius:14px; padding:24px; margin-bottom:20px; }
+.provider-loc { color:#6b7280; font-weight:600; margin:4px 0 12px; }
+.provider-intro { color:#374151; margin-bottom:16px; }
+.cta { display:inline-block; background:#0f766e; color:#fff; padding:10px 18px; border-radius:10px; text-decoration:none; font-weight:600; }
+.block { background:#fff; border:1px solid #e3e8e6; border-radius:14px; padding:20px; margin-bottom:16px; }
+.block h2 { font-size:17px; margin-bottom:12px; }
+.pill-list, .cred-list { list-style:none; display:flex; flex-wrap:wrap; gap:8px; }
+.cred-list { flex-direction:column; }
+.pill-list li, .cred-list li { background:#f0fdfa; border:1px solid #ccfbf1; border-radius:999px; padding:6px 12px; font-size:14px; }
+.cred-list li { display:flex; justify-content:space-between; align-items:center; border-radius:10px; }
+.pill-list a { color:#0f766e; text-decoration:none; }
+.badge { font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; }
+.badge.verified { background:#dcfce7; color:#166534; }
+.badge.pending { background:#fef3c7; color:#92400e; }
+.review { border-top:1px solid #eee; padding-top:10px; margin-top:10px; }

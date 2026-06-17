@@ -153,6 +153,11 @@ cursor.execute("""
     )
 """)
 
+for col in ("contact_name", "home_city", "home_state"):
+    existing = [r[1] for r in cursor.execute("PRAGMA table_info(providers)").fetchall()]
+    if col not in existing:
+        cursor.execute(f"ALTER TABLE providers ADD COLUMN {col} TEXT")
+
 connection.commit()
 connection.close()
 print("Schema ready: app.db created with all Phase 1 tables + 'rv-inspection' seeded.")

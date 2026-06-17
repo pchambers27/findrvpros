@@ -13,7 +13,7 @@ cursor.execute("DELETE FROM service_areas")
 florida_cities = [
     "Tampa", "Orlando", "Jacksonville", "Fort Myers", "Sarasota",
     "Ocala", "Tallahassee", "Pensacola", "Fort Lauderdale", "Daytona Beach",
-    "Lakeland", "Gainesville", "St. Petersburg", "Naples", "Kissimmee",
+    "Lakeland", "Gainesville", "St. Petersburg", "Naples", "Kissimmee", "Clearwater"
 ]
 
 for city in florida_cities:

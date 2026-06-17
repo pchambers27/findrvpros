@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}{{ provider.business_name }} | {{ provider.home_city }}, {{ provider.home_state }} RV Inspection{% endblock %}
+{% block meta %}<meta name="description" content="{{ meta_desc }}">{% endblock %}
+{% block content %}
+  <nav class="crumbs">
+    <a href="/">Home</a> › <a href="/rv-inspection">RV Inspection</a> ›
+    <a href="/rv-inspection/{{ provider.home_state|lower }}">{{ provider.home_state }}</a> ›
+    <span>{{ provider.business_name }}</span>
+  </nav>
+
+  <div class="provider-hero">
+    <h1>{{ provider.business_name }}</h1>
+    <p class="provider-loc">{{ provider.home_city }}, {{ provider.home_state }}</p>
+    {% if credentials %}
+      <p class="provider-intro">
+        {{ provider.contact_name }} is a
+        {{ credentials | map(attribute='body') | join(' & ') }}-certified pro
+        serving {{ provider.home_city }} and surrounding areas within {{ provider.service_radius_mi }} miles.
+      </p>
+    {% endif %}
+    <a href="#request" class="cta">Request an inspection</a>
+  </div>
+
+  {% if provider.bio %}
+    <section class="block"><h2>About</h2><p>{{ provider.bio }}</p></section>
+  {% endif %}
+
+  <section class="block">
+    <h2>Services</h2>
+    <ul class="pill-list">
+      {% for s in services %}
+        <li>{{ s.name }}{% if s.price_from %} — from ${{ s.price_from|int }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="block">
+    <h2>Credentials</h2>
+    <ul class="cred-list">
+      {% for c in credentials %}
+        <li>
+          {{ c.body }} — {{ c.level }}
+          {% if c.verified_at %}<span class="badge verified">✓ Verified</span>
+          {% else %}<span class="badge pending">Pending verification</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="block">
+    <h2>Service area</h2>
+    <ul class="pill-list">
+      {% for a in areas %}
+        <li><a href="/rv-inspection/{{ a.state_slug }}/{{ a.city_slug }}">{{ a.city }}</a></li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="block">
+    <h2>Reviews</h2>
+    {% if review_count > 0 %}
+      <p class="rating">★ {{ "%.1f"|format(avg_rating) }} ({{ review_count }})</p>
+      {% for r in reviews %}
+        <div class="review"><strong>★ {{ r.rating }}</strong><p>{{ r.body }}</p></div>
+      {% endfor %}
+    {% else %}
+      <p class="empty">No reviews yet — reviews come from completed inspections booked through the platform.</p>
+    {% endif %}
+  </section>
+
+  <section class="block" id="request">
+    <h2>Request an inspection</h2>
+    <p class="empty">Booking opens in Phase 4 — this is where the lead form will live.</p>
+  </section>
+{% endblock %}
