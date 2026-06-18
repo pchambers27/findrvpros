@@ -1,4 +1,4 @@
-import sqlite3, re
+import psycopg2, re
 
 def slugify(text):
     text = text.lower().strip()
