@@ -1,17 +1,38 @@
-from flask import Flask, render_template, abort, Response, url_for
-import sqlite3
+from flask import Flask, render_template, request, abort, redirect, url_for, session, Response
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import date
+import os
+import psycopg2
 import re
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-in-prod')
+
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 
 def query_db(query, args=()):
-    connection = sqlite3.connect("app.db")
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute(query, args)
     rows = cursor.fetchall()
-    connection.close()
+    conn.close()
     return rows
+
+def execute_db(query, args=()):
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    cursor.execute(query, args)
+    conn.commit()
+    try:
+        result = cursor.fetchone()
+        new_id = result[0] if result else None
+    except Exception:
+        new_id = None
+    conn.close()
+    return new_id
 
 def slugify(text):
     text = text.lower().strip()
@@ -20,7 +41,7 @@ def slugify(text):
     return text.strip("-")
 
 def get_service_or_404(service_slug):
-    rows = query_db("SELECT id, slug, name FROM services WHERE slug = ?", (service_slug,))
+    rows = query_db("SELECT id, slug, name FROM services WHERE slug = %s", (service_slug,))
     if not rows:
         abort(404)
     return rows[0]
@@ -42,7 +63,7 @@ def service_pillar(service_slug):
 def service_state(service_slug, state_slug):
     service = get_service_or_404(service_slug)
     cities = query_db(
-        "SELECT city, city_slug, state FROM service_areas WHERE state_slug = ? ORDER BY city",
+        "SELECT city, city_slug, state FROM service_areas WHERE state_slug = %s ORDER BY city",
         (state_slug,)
     )
     if not cities:
@@ -55,7 +76,7 @@ def service_city(service_slug, state_slug, city_slug):
     service = get_service_or_404(service_slug)
 
     areas = query_db(
-        "SELECT id, city, state, state_slug, city_slug FROM service_areas WHERE state_slug = ? AND city_slug = ?",
+        "SELECT id, city, state, state_slug, city_slug FROM service_areas WHERE state_slug = %s AND city_slug = %s",
         (state_slug, city_slug)
     )
     if not areas:
@@ -69,8 +90,8 @@ def service_city(service_slug, state_slug, city_slug):
         JOIN provider_areas ON provider_areas.provider_id = providers.id
         JOIN provider_services ON provider_services.provider_id = providers.id
         JOIN services ON services.id = provider_services.service_id
-        WHERE provider_areas.service_area_id = ?
-          AND services.slug = ?
+        WHERE provider_areas.service_area_id = %s
+          AND services.slug = %s
           AND providers.status = 'live'
         ORDER BY providers.business_name
         """,
@@ -81,7 +102,7 @@ def service_city(service_slug, state_slug, city_slug):
 
 @app.route('/providers/<slug>')
 def provider_profile(slug):
-    rows = query_db("SELECT * FROM providers WHERE slug = ? AND status = 'live'", (slug,))
+    rows = query_db("SELECT * FROM providers WHERE slug = %s AND status = 'live'", (slug,))
     if not rows:
         abort(404)
     provider = rows[0]
@@ -90,20 +111,20 @@ def provider_profile(slug):
     services = query_db("""
         SELECT services.name, services.slug, provider_services.price_from, provider_services.price_to
         FROM provider_services JOIN services ON services.id = provider_services.service_id
-        WHERE provider_services.provider_id = ? ORDER BY services.name""", (pid,))
+        WHERE provider_services.provider_id = %s ORDER BY services.name""", (pid,))
 
     areas = query_db("""
         SELECT service_areas.city, service_areas.state_slug, service_areas.city_slug
         FROM provider_areas JOIN service_areas ON service_areas.id = provider_areas.service_area_id
-        WHERE provider_areas.provider_id = ? ORDER BY service_areas.city""", (pid,))
+        WHERE provider_areas.provider_id = %s ORDER BY service_areas.city""", (pid,))
 
     credentials = query_db(
-        "SELECT body, level, verified_at FROM credentials WHERE provider_id = ? ORDER BY body", (pid,))
+        "SELECT body, level, verified_at FROM credentials WHERE provider_id = %s ORDER BY body", (pid,))
 
     reviews = query_db(
-        "SELECT rating, body, created_at FROM reviews WHERE provider_id = ? ORDER BY created_at DESC", (pid,))
+        "SELECT rating, body, created_at FROM reviews WHERE provider_id = %s ORDER BY created_at DESC", (pid,))
     stats = query_db(
-        "SELECT AVG(rating) AS avg_rating, COUNT(*) AS review_count FROM reviews WHERE provider_id = ?", (pid,))[0]
+        "SELECT AVG(rating) AS avg_rating, COUNT(*) AS review_count FROM reviews WHERE provider_id = %s", (pid,))[0]
 
     cred_names = " and ".join(f"{c['body']} {c['level']}" for c in credentials) if credentials else ""
     meta_desc = f"{provider['contact_name']} — {provider['business_name']}"
@@ -155,4 +176,4 @@ def sitemap():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=8080, debug=False)
