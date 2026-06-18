@@ -1,4 +1,5 @@
-import psycopg2, re
+import os, psycopg2, re
+from psycopg2.extras import RealDictCursor
 
 def slugify(text):
     text = text.lower().strip()
@@ -6,8 +7,12 @@ def slugify(text):
     text = re.sub(r"-+", "-", text)
     return text.strip("-")
 
-connection = sqlite3.connect("app.db")
-cursor = connection.cursor()
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+
+connection = psycopg2.connect(DATABASE_URL)
+cursor = connection.cursor(cursor_factory=RealDictCursor)
 cursor.execute("DELETE FROM service_areas")
 
 florida_cities = [
@@ -18,7 +23,7 @@ florida_cities = [
 
 for city in florida_cities:
     cursor.execute(
-        "INSERT OR IGNORE INTO service_areas (state, state_slug, city, city_slug) VALUES (?, ?, ?, ?)",
+        "INSERT INTO service_areas (state, state_slug, city, city_slug) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
         ("Florida", "florida", city, slugify(city))
     )
 
