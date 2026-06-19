@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, abort, redirect, url_for, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date
+from functools import wraps
 import os
 import psycopg2
 import re
@@ -33,6 +34,34 @@ def execute_db(query, args=()):
         new_id = None
     conn.close()
     return new_id
+
+def current_user():
+    user_id = session.get('user_id')
+    if user_id:
+        return None
+    rows = query_db("SELECT id, email, role FROM users WHERE id = %s", (user_id,))
+    return rows[0] if rows else None
+
+@app.context_processor
+def inject_user():
+    return {'current_user': current_user()}
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user():
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+def provider_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = current_user()
+        if not user or user['role'] not in ('provider', 'admin'):
+             return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
 
 def slugify(text):
     text = text.lower().strip()
@@ -172,6 +201,55 @@ def sitemap():
     xml.append("</urlset>")
     
     return Response("\n".join(xml), mimetype="application/xml")
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        role = request.form.get('role', 'owner')
+
+        errors = []
+        if not email:
+            errors.append("Email is required.")
+        if len(password) < 8:
+            errors.append("Password must be at least 8 characters.")
+        if query_db("SELECT id FROM users WHERE email = %s", (email,)):
+            errors.append("An account with that email already exists.")
+
+        if errors:
+            return render_template('register.html', errors=errors, email=email)
+
+        user_id = execute_db(
+            "INSERT INTO users (email, password_hash, role, created_at) VALUES (%s, %s, %s, %s) RETURNING id",
+            (email, generate_password_hash(password), role, date.today().isoformat())
+        )
+        session['user_id'] = user_id
+        return redirect(url_for('home'))
+
+    return render_template('register.html', errors=None, email='')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        rows = query_db("SELECT id, password_hash FROM users WHERE email = %s", (email,))
+        if rows and check_password_hash(rows[0]['password_hash'], password):
+            session['user_id'] = rows[0]['id']
+            return redirect(url_for('home'))
+
+        return render_template('login.html', error="Incorrect email or password.", email=email)
+
+    return render_template('login.html', error=None, email='')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
 
 
 

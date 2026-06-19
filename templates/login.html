@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Log In — Find RV Pros{% endblock %}
+{% block content %}
+  <h1>Log in</h1>
+
+  {% if error %}
+    <div class="errors"><p>{{ error }}</p></div>
+  {% endif %}
+
+  <form action="/login" method="post" class="auth-form">
+    <label>Email
+      <input type="email" name="email" value="{{ email }}" required>
+    </label>
+    <label>Password
+      <input type="password" name="password" required>
+    </label>
+    <button type="submit">Log in</button>
+  </form>
+  <p class="auth-alt">Need an account? <a href="/register">Sign up</a></p>
+{% endblock %}

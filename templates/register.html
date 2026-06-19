@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Create Account — Find RV Pros{% endblock %}
+{% block content %}
+  <h1>Create your account</h1>
+
+  {% if errors %}
+    <div class="errors">
+      {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  <form action="/register" method="post" class="auth-form">
+    <label>Email
+      <input type="email" name="email" value="{{ email }}" required>
+    </label>
+    <label>Password
+      <input type="password" name="password" required minlength="8">
+    </label>
+    <label>I am a...
+      <select name="role">
+        <option value="owner">RV Owner</option>
+        <option value="provider">RV Service Professional</option>
+      </select>
+    </label>
+    <button type="submit">Create account</button>
+  </form>
+  <p class="auth-alt">Already have an account? <a href="/login">Log in</a></p>
+{% endblock %}
