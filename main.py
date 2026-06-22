@@ -37,7 +37,7 @@ def execute_db(query, args=()):
 
 def current_user():
     user_id = session.get('user_id')
-    if user_id:
+    if not user_id:
         return None
     rows = query_db("SELECT id, email, role FROM users WHERE id = %s", (user_id,))
     return rows[0] if rows else None
