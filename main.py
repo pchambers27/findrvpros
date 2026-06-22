@@ -26,12 +26,12 @@ def execute_db(query, args=()):
     conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute(query, args)
-    conn.commit()
     try:
         result = cursor.fetchone()
         new_id = result[0] if result else None
     except Exception:
         new_id = None
+    conn.commit()
     conn.close()
     return new_id
 
