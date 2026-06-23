@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard -- FindRVPros{% endblock %}
+{% block content %}
+
+<h1>Dashboard</h1>
+
+{% if user['role'] == 'provider' %}
+{% if provider %}
+<div class="card">
+    <div class="card-header">
+        <h2>{{ provider['business_name'] }}</h2>
+        <span class="badge verified">Claimed</span>
+    </div>
+    <p class="location">{{ provider['home_city'] }}, {{ provider['home_state'] }}</p>
+    <div class="dashboard-actions">
+        <a href="/providers/{{ provider['slug'] }}" class="btn-secondary">View Profile</a>
+        <a href="/dashboard/edit" class="btn-primary">Edit Profile</a>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <h2>Claim your profile</h2>
+    <p>Are you listed on FindRVPros? Search for your business and claim your profile to start managing it.</p>
+    <a href="/claim" class="btn-primary">Find my listing</a>
+</div>
+<div class="card">
+    <h2>Not listed yet?</h2>
+    <p>Add your business to our directory and start receiving leads.</p>
+    <a href="/add" class="btn-secondary">Add my business</a>
+</div>
+{% endif %}
+{% else %}
+<div class="card">
+    <h2>Welcome, back</h2>
+    <p>Browse certified RV service professionals near you.</p>
+    <a href="/rv-inspection" class="btn-primary">Find a pro</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Claim Your Profile - FindRFPros{% endblock %}
+{% block content %}
+<h1>Find your listing</h1>
+<p class="lede">Search your business name below. IF you're already in our directory you can claim your profile.</p>
+<form action="/claim" method="post" class="search">
+    <input type="text" name="search" placeholder="Search your business name..." value="{{ search }}"> <button type="submit">Search</button>
+</form>
+{% if search and not results %}
+<p class="empty">No unclaimed listing found for "{{ search }}". <a href="/add">Add your business instead.</a></p>
+{% endif %}
+{% if results %}
+<div class="card-list" style="margin-top: 24px;">
+     {% for p in results %}
+    <div class="card">
+        <h2>{{ p['business_name'] }}</h2>
+        <p class="location">{{ p['home_city'] }}, {{ p['home_state'] }}</p>
+        <form action="/claim/{{ p['id'] }}" method="post" style="margin-top: 12px;">
+            <button type="submit" class="btn-primary">This is my business</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

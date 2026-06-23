@@ -71,8 +71,18 @@ h1 { font-size: 26px; margin-bottom: 10px; }
 .badge.pending { background:#fef3c7; color:#92400e; }
 .review { border-top:1px solid #eee; padding-top:10px; margin-top:10px; }
 
+.site-header {
+    border-bottom: 1px solid #e3e8e6;
+    padding: 12px 0;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
 .header-inner {
     max-width: 760px;
+    width: 100%;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -82,27 +92,18 @@ h1 { font-size: 26px; margin-bottom: 10px; }
 
 .nav-links {
     display: flex;
-    align-items: center;
     gap: 16px;
+    align-items: center;
     font-size: 14px;
-}
-
-.nav-links a {
-    color: #0f766e;
-    text-decoration: none;
-    font-weight: 500;
 }
 
 .nav-email {
     color: #6b7280;
     font-size: 13px;
-}
-
-.nav-cta {
-    background: #0f766e;
-    color: #fff !important;
-    padding: 6px 14px;
-    border-radius: 8px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .auth-form {
@@ -153,4 +154,102 @@ h1 { font-size: 26px; margin-bottom: 10px; }
     padding: 12px 16px;
     border-radius: 10px;
     margin-bottom: 16px;
+}
+
+.btn-primary {
+    display: inline-block;
+    background: #0f766e;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    display: inline-block;
+    background: #f0fdfa;
+    color: #0f766e;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    border: 1px solid #ccfbf1;
+    cursor: pointer;
+}
+
+.dashboard-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.search {
+    display: flex;
+    gap: 8px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+}
+
+.search input {
+    flex: 1;
+    min-width: 200px;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;    
+}
+
+.search button {
+    padding: 12px 20px;
+    background: #0f766e;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.listing-form {
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.listing-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.listing-form input,  .listing-form select,  .listing-form textarea {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit
+}
+
+.listing-form textarea { 
+    resize: vertical; 
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    flex-wrap: wrap;
 }

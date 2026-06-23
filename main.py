@@ -252,6 +252,102 @@ def logout():
     return redirect(url_for('home'))
 
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    user = current_user()
+    provider = query_db(
+        "SELECT * FROM providers WHERE owner_user_id = %s", (user['id'],)
+    )
+    provider = provider[0] if provider else None
+    return render_template('dashboard.html', user=user, provider=provider)
 
+
+@app.route('/claim', methods=['GET', 'POST'])
+@login_required
+def claim():
+    user = current_user()
+    if user['role'] != 'provider':
+        return redirect(url_for('dashboard'))
+    existing = query_db("SELECT id FROM providers WHERE owner_user_id = %s", (user['id'],))
+    if existing:
+        return redirect(url_for('dashboard'))
+    results = []
+    search = ''
+    if request.method == 'POST':
+        search = request.form.get('search', '').strip()
+        if search:
+            results = query_db(
+                """SELECT id, business_name, home_city, home_state, claimed FROM providers WHERE business_name ILIKE %s AND owner_user_id IS NULL ORDER BY business_name
+                """,
+                (f"%{search}%",)
+            )
+    return render_template('claim.html', search=search, results=results)
+
+
+@app.route('/claim/<int:provider_id>', methods=['POST'])
+@login_required
+def claim_profile(provider_id):
+    user = current_user()
+    if user['role'] != 'provider':
+        return redirect(url_for('dashboard'))
+    rows = query_db(
+        "SELECT id, owner_user_id FROM providers WHERE id = %s", (provider_id,)
+    )
+    if not rows or rows[0]['owner_user_id'] is not None:
+        return redirect(url_for('claim'))
+
+    execute_db(
+        """
+        UPDATE providers
+        SET owner_user_id = %s, claimed = 1
+        WHERE id = %s
+        """, (user['id'], provider_id)
+    )
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/dashboard/edit', methods=['GET', 'POST'])
+@login_required
+def dashboard_edit():
+    user = current_user()
+    rows = query_db("SELECT * FROM providers WHERE owner_user_id = %s", (user['id'],))
+    if not rows:
+        return redirect(url_for('dashboard'))
+    provider = rows[0]
+    if request.method == 'POST':
+        business_name = request.form.get('business_name', '').strip()
+        contact_name = request.form.get('contact_name', '').strip()
+        bio = request.form.get('bio', '').strip()
+        phone = request.form.get('phone', '').strip()
+        website = request.form.get('website', '').strip()
+        home_city = request.form.get('home_city', '').strip()
+        home_state = request.form.get('home_state', '').strip()
+        radius = request.form.get('service_radius_mi', '50').strip()
+        
+        errors = []
+        if not business_name:
+            errors.append("Business name is required.")
+        if not home_city:
+            errors.append("City is required.")
+
+        if errors:
+            return render_template('dashboard_edit.html', provider=provider, errors=errors)
+
+        execute_db(
+            """
+            UPDATE providers SET business_name = %s, contact_name = %s, bio = %s, phone = %s, website = %s, home_city = %s, home_state = %s, service_radius_mi = %s
+            WHERE owner_user_id = %s
+            """,
+            (business_name, contact_name, bio, phone, website, home_city, home_state, radius, user['id'])
+        )
+        return redirect(url_for('dashboard'))
+    return render_template('dashboard_edit.html', provider=provider, errors=None)
+
+
+
+
+
+        
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)

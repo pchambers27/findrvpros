@@ -13,11 +13,8 @@
             <a href="/" class="brand">FindRVPros</a>
             <nav class="nav-links">
                 {% if current_user %}
-                    <span class="nav-email">{{ current_user['email'] }}</span>
-                    {% if current_user['role'] == 'provider' %}
-                        <a href="/dashboard">Dashboard</a>
-                    {% endif %}
-                    <a href="/logout">Log out</a>
+                   <a href="/dashboard">Account</a>
+                   <a href="/logout">Log out</a>
                 {% else %}
                     <a href="/login">Log in</a>
                     <a href="/register" class="nav-cta">Sign up</a>
