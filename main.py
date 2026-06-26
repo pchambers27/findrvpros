@@ -131,6 +131,7 @@ def service_city(service_slug, state_slug, city_slug):
             SELECT providers.business_name, providers.slug, providers.bio, 'home' AS coverage_type, NULL AS travel_end_date, 1 AS priority
             FROM providers
             JOIN provider_areas ON provider_areas.provider_id = providers.id
+            JOIN provider_services ON provider_services.provider_id = providers.id
             JOIN services ON services.id = provider_services.service_id
             WHERE provider_areas.service_area_id = %s AND services.slug = %s AND providers.status = 'live'
             UNION ALL
