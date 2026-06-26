@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Leads — FindRVPros{% endblock %}
+{% block content %}
+<nav class="crumbs">
+    <a href="/dashboard">Dashboard</a>
+    › <span>Leads</span>
+</nav>
+
+<h1>Your Leads</h1>
+<p class="lede">Inspection requests from RV owners. Reach out to them directly.</p>
+
+{% if leads %}
+<div class="card-list">
+    {% for lead in leads %}
+     <div class="card">
+         <div class="card-header">
+             <h2>{{ lead['owner_name'] }}</h2>
+             <span class="area-tag traveling">{{ lead['status'] }}</span>
+              </div>
+               <p class="lead-contact"><a href="mailto: {{ lead['owner_email'] }}">{{ lead['owner_email'] }}</a>
+               {% if lead['owner_phone'] %} * <a href="tel:{{ lead['owner_phone'] }}">{{ lead['owner_phone'] }}</a>
+                   {% endif %}
+               </p>
+                {% if lead['rv_details'] %}<p><strong>RV:</strong>{{ lead['rv_details'] }}</p>
+                 {% endif %}
+          
+         {% if lead['preferred_date'] %}
+         <p><strong>Preferred date:</strong>{{ lead['preferred_date'] }}</p>
+           {% endif %}
+           {% if lead['message'] %}
+         <p>{{ lead['message'] }}</p>
+           {% endif %}
+         <p class="dates">Recieved {{ lead['created_at'] }}</p>
+          </div>
+          {% endfor %}
+          </div>
+          {% else %}
+          <p class="empty">No leads yet. As RV owners find your profile and request inspections, they'll appear here.</p>
+           {% endif %}
+            {% endblock %}

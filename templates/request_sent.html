@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Request Sent - FindRVPros{% endblock %}
+{% block content %}
+{% if success %}
+<div class="success-box">
+    <h1>Request sent!</h1>
+    <p>Thanks for your request. {{ provider['business_name'] }} will get back to you soon.</p>
+    <a href="/providers/{{ slug }}" class="btn-secondary">Back to profile</a>
+</div>
+{% else %}
+<h1>Something's missing</h1>
+{% if errors %}
+<div class="errors">
+    {% for error in errors %}
+    <p>{{ error }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+<a href="/providers/{{ slug }} #request" class="btn-primary">Go back and try again</a>
+{% endif %}
+{% endblock %}

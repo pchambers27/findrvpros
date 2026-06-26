@@ -95,6 +95,15 @@
 
   <section class="block" id="request">
     <h2>Request an inspection</h2>
-    <p class="empty">Booking opens in Phase 4 — this is where the lead form will live.</p>
+    <p class="lede">Send {{ provider.business_name }} a request and they'll get back to you directly.</p>
+    <form action="{{ url_for('request_service', slug=provider.slug) }}" method="post" class="listing-form">
+      <label>Your name *<input type="text" name="owner_name" required></label>
+      <label>Email<input type="email" name="owner_email" required></label>
+      <label>Phone<input type="text" name="owner_phone" placeholder="(555) 555-5555"></label>
+      <label>RV details<input type="text" name="rv_details" placeholder="Year, make, model - e.g. 2017 Keystone Outback"></label>
+      <label>Preferred date<input type="date" name="preferred_date"></label>
+      <label>Message<textarea name="message" rows="4" placeholder="Tell them about the RV you're looking to have inspected, the location, and any specific concerns..."></textarea></label>
+      <button type="submit" class="btn-primary">Send request</button>
+    </form>
   </section>
 {% endblock %}

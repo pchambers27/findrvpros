@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Travel Dates — FindRVPros{% endblock %}
+{% block content %}
+
+<nav class="crumbs">
+    <a href="/dashboard">Dashboard</a>
+    › <span>Travel Dates</span>
+</nav>
+
+<h1>Travel dates</h1>
+<p class="lede">Heading somewhere? Add your travel window and you'll appear on that city's page while you're there.</p>
+
+{% if errors %}
+<div class="errors">
+    {% for error in errors %}
+    <p>{{ error }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom: 24px;">
+    <h2>Add a travel window</h2>
+    <form action="/dashboard/travel" method="post" class="listing-form">
+        <label>City
+            <select name="service_area_id"><option value="">- Select a city -</option>
+            {% for a in areas %}
+                <option value="{{ a['id'] }}">{{ a['city'] }}, {{ a['state'] }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="date-row">
+            <label>From<input type="date" name="start_date"></label>
+            <label>To<input type="date" name="end_date"></label>
+        </div>
+        <button type="submit" class="btn-primary">Add travel window</button>
+    </form>
+</div>
+
+<h2>Your travel windows</h2>
+{% if travel_dates %}
+<div class="card-list">
+    {% for t in travel_dates %}
+     <div class="card">
+         <div class="card-header">
+             <p class="location">{{ t['city'] }}, {{ t['state'] }}</p>
+             <span class="area-tag {% if t['end_date'] < today %}expired{% else %}traveling{% endif %}">
+                 {% if t['end_date'] < today %}Expired{% else %}Active{% endif %}
+                                                 </span>
+         </div>
+         <p class="dates">{{ t['start_date'] }} to {{ t['end_date'] }}'</p>
+          <form action="/dashboard/travel/{{ t['id'] }}/delete" method="post" style="margin-top: 12px;">
+              <button type="submit" class="btn-delete" onclick="return confirm('Remove this travel window?')">Remove</button>
+          </form>
+           </div>
+            {% endfor %}
+             </div>
+              {% else %}
+               <p class="empty">You haven't added any travel windows yet.</p>
+                {% endif %}
+                 {% endblock %}

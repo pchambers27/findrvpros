@@ -100,34 +100,57 @@ def service_state(service_slug, state_slug):
     return render_template('state.html', service=service,
                            state_name=cities[0]['state'], state_slug=state_slug, cities=cities)
 
+
+
+
 @app.route('/<service_slug>/<state_slug>/<city_slug>')
 def service_city(service_slug, state_slug, city_slug):
     service = get_service_or_404(service_slug)
 
+
+    
     areas = query_db(
-        "SELECT id, city, state, state_slug, city_slug FROM service_areas WHERE state_slug = %s AND city_slug = %s",
+        """
+        SELECT id, city, state, state_slug, city_slug 
+        FROM service_areas 
+        WHERE state_slug = %s AND city_slug = %s
+        """,
         (state_slug, city_slug)
     )
+
+    
     if not areas:
         abort(404)   # no service_area row = no page. The churn rule, enforced.
     area = areas[0]
+    today = date.today().isoformat()
 
     providers = query_db(
         """
-        SELECT DISTINCT providers.business_name, providers.slug, providers.bio
-        FROM providers
-        JOIN provider_areas ON provider_areas.provider_id = providers.id
-        JOIN provider_services ON provider_services.provider_id = providers.id
-        JOIN services ON services.id = provider_services.service_id
-        WHERE provider_areas.service_area_id = %s
-          AND services.slug = %s
-          AND providers.status = 'live'
-        ORDER BY providers.business_name
+        SELECT DISTINCT ON (slug) business_name, slug, bio, coverage_type, travel_end_date
+        FROM (
+            SELECT providers.business_name, providers.slug, providers.bio, 'home' AS coverage_type, NULL AS travel_end_date, 1 AS priority
+            FROM providers
+            JOIN provider_areas ON provider_areas.provider_id = providers.id
+            JOIN services ON services.id = provider_services.service_id
+            WHERE provider_areas.service_area_id = %s AND services.slug = %s AND providers.status = 'live'
+            UNION ALL
+            SELECT providers.business_name, providers.slug, providers.bio, 'traveling' AS coverage_type, provider_travel.end_date AS travel_end_date, 2 AS priority
+            FROM providers
+            JOIN provider_travel ON provider_travel.provider_id = providers.id
+            JOIN provider_services ON provider_services.provider_id = providers.id
+            JOIN services ON services.id = provider_services.service_id
+            WHERE provider_travel.service_area_id = %s AND services.slug = %s AND providers.status = 'live' AND provider_travel.start_date <= %s AND provider_travel.end_date >= %s
+        ) combined
+        ORDER BY slug, priority
         """,
-        (area['id'], service_slug)
+        (area['id'], service_slug, area['id'], service_slug, today, today)
     )
 
     return render_template('city.html', service=service, area=area, providers=providers)
+
+
+
+
 
 @app.route('/providers/<slug>')
 def provider_profile(slug):
@@ -345,7 +368,126 @@ def dashboard_edit():
     return render_template('dashboard_edit.html', provider=provider, errors=None)
 
 
+@app.route('/dashboard/travel', methods=['GET', 'POST'])
+@login_required
+def dashboard_travel():
+    user = current_user()
+    rows = query_db("SELECT * FROM providers WHERE owner_user_id = %s", (user['id'],))
+    if not rows:
+        return redirect(url_for('dashboard'))
+    provider = rows[0]
+    errors = None
 
+    if request.method == 'POST':
+        service_area_id = request.form.get('service_area_id', '').strip()
+        start_date = request.form.get('start_date', '').strip()
+        end_date = request.form.get('end_date', '').strip()
+
+        errors = []
+        if not service_area_id:
+            errors.append("Please select a city")
+        if not start_date:
+            errors.append("Start date is required")
+        if not end_date:
+            errors.append("End date is required")
+        if start_date and end_date and end_date < start_date:
+            errors.append("End date must be after start date")
+
+        if not errors:
+            execute_db(
+                """
+                INSERT INTO provider_travel (provider_id, service_area_id, start_date, end_date, created_at)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (provider['id'], service_area_id, start_date, end_date, date.today().isoformat())
+            )
+            return redirect(url_for('dashboard_travel'))
+    
+    areas = query_db("SELECT id, city, state FROM service_areas ORDER BY state, city")
+
+    travel_dates = query_db(
+        """
+        SELECT provider_travel.id, service_areas.city, service_areas.state, provider_travel.start_date, provider_travel.end_date
+        FROM provider_travel
+        JOIN service_areas ON service_areas.id = provider_travel.service_area_id
+        WHERE provider_travel.provider_id = %s
+        ORDER BY provider_travel.start_date DESC
+        """,
+        (provider['id'],)
+    )
+    return render_template('dashboard_travel.html', provider=provider, areas=areas, travel_dates=travel_dates, errors=errors, today=date.today().isoformat())
+
+
+@app.route('/dashboard/travel/<int:travel_id>/delete', methods=['POST'])
+@login_required
+def delete_travel(travel_id):
+    user = current_user()
+    rows = query_db("SELECT id FROM providers WHERE owner_user_id = %s", (user['id'],))
+    if not rows:
+        return redirect(url_for('dashboard'))
+    execute_db(
+        "DELETE FROM provider_travel WHERE id = %s AND provider_id = %s",
+        (travel_id, rows[0]['id'])
+    )
+    return redirect(url_for('dashboard_travel'))
+
+
+@app.route('/providers/<slug>/request', methods=['POST'])
+def request_service(slug):
+    rows = query_db("SELECT id, business_name FROM providers WHERE slug = %s AND status = 'live'", (slug,))
+    if not rows:
+        abort(404)
+    provider = rows[0]
+
+    owner_name = request.form.get('owner_name', '').strip()
+    owner_email = request.form.get('owner_email', '').strip()
+    owner_phone = request.form.get('owner_phone', '').strip()
+    rv_details = request.form.get('rv_details', '').strip()
+    preferred_date = request.form.get('preferred_date', '').strip()
+    message = request.form.get('message', '').strip()
+
+    errors = []
+    if not owner_name:
+        errors.append("Name is required.")
+    if not owner_email:
+        errors.append("Email is required.")
+
+    if errors:
+        return render_template('request_sent.html', provider=provider, slug=slug, errors=errors, success=False)
+
+    service = query_db("SELECT id FROM services WHERE slug = 'rv-inspection'")
+    service_id = service[0]['id'] if service else None
+    user = current_user()
+    owner_id = user['id'] if user else None
+
+    execute_db(
+        """
+        INSERT INTO leads (owner_id, provider_id, service_id, message, status, created_at, owner_name, owner_email, owner_phone, rv_details, preferred_date)
+        VALUES (%s, %s, %s, %s, 'new', %s, %s, %s, %s, %s, %s)
+        """,
+        (owner_id, provider['id'], service_id, message, date.today().isoformat(), owner_name, owner_email, owner_phone, rv_details, preferred_date)
+    )
+    return render_template('request_sent.html', provider=provider, slug=slug, errors=None, success=True)
+
+@app.route('/dashboard/leads')
+@login_required
+def dashboard_leads():
+    user = current_user()
+    rows = query_db("SELECT id, business_name FROM providers WHERE owner_user_id = %s", (user['id'],))
+    if not rows:
+        return redirect(url_for('dashboard'))
+    provider = rows[0]
+    leads = query_db(
+        """
+        SELECT owner_name, owner_email, owner_phone, rv_details, preferred_date, message, status, created_at
+        FROM leads
+        WHERE provider_id = %s
+        ORDER BY created_at DESC
+        """,
+        (provider['id'],)
+    )
+
+    return render_template('dashboard_leads.html', provider=provider, leads=leads)
 
 
         

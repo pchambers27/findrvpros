@@ -17,8 +17,13 @@
     <div class="card-list">
       {% for p in providers %}
         <article class="card">
-          <h2><a href="/providers/{{ p.slug }}">{{ p.business_name }}</a></h2>
-          {% if p.bio %}<p>{{ p.bio }}</p>{% endif %}
+          <h2><a href="/providers/{{ p['slug'] }}" class="card-link">{{ p['business_name'] }}</a></h2>
+          {% if p['coverage_type'] == 'traveling' %}
+          <span class="area-tag travling">Traveling here through {{ p['travel_end_date'] }}</span>
+          {% endif %}
+          {% if p['bio'] %}
+          <p class="specialty">{{ p['bio'] }}</p>
+          {% endif %}
         </article>
       {% endfor %}
     </div>
